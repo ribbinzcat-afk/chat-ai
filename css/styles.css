@@ -103,7 +103,8 @@
 }
 
 html, body {
-    height: 100%;
+    height: 100vh; /* fallback สำหรับเบราว์เซอร์เก่า */
+    height: 100dvh; /* ใช้ความสูงที่ปรับตาม UI เบราว์เซอร์อัตโนมัติ */
     overflow: hidden;
 }
 
@@ -119,6 +120,7 @@ body {
 #app {
     display: flex;
     height: 100vh;
+    height: 100dvh;
     flex: 1;
     min-height: 0;
     overflow: hidden;
