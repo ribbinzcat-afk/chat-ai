@@ -240,78 +240,69 @@ btnPrompts: document.getElementById('btn-prompts'),
     //  MARKDOWN PARSER
     // ========================================
 
-parseMarkdown(text) {
-    if (!text) return '';
+    parseMarkdown(text) {
+        if (!text) return '';
 
-    // 1) ดึง code blocks ออกก่อน (ป้องกัน escape)
-    const codeBlocks = [];
-    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-        const escaped = this._escapeHtml(code.trim());
-        const placeholder = `%%CODEBLOCK_${codeBlocks.length}%%`;
-        codeBlocks.push(
-            `<div class="code-block-wrapper">` +
-            `<button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button>` +
-            `<pre><code class="language-${lang}">${escaped}</code></pre></div>`
-        );
-        return placeholder;
-    });
+        let html = this._escapeHtml(text);
 
-    // 2) ดึง inline code ออก
-    const inlineCodes = [];
-    text = text.replace(/`([^`]+)`/g, (_, code) => {
-        const placeholder = `%%INLINE_${inlineCodes.length}%%`;
-        inlineCodes.push(`<code>${this._escapeHtml(code)}</code>`);
-        return placeholder;
-    });
+        // Code blocks
+        html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+            return `<div class="code-block-wrapper"><button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button><pre><code class="language-${lang}">${code.trim()}</code></pre></div>`;
+        });
 
-    // 3) ตอนนี้ escape ส่วนที่เหลือได้แล้ว
-    let html = this._escapeHtml(text);
+        // Inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-    // 4) Bold & Italic
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+        // Bold
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-    // 5) Headers
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+        // Italic
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-    // 6) Blockquote — &gt; เพราะผ่าน escape แล้ว
-    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+        // Strikethrough
+        html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-    // 7) Unordered list
-    html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+        // Headers
+        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
 
-    // 8) Ordered list
-    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (match) => {
-        // ถ้าอยู่ใน <ul> แล้วข้าม
-        return match.includes('<ul>') ? match : `<ol>${match}</ol>`;
-    });
+        // Blockquote
+        html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
 
-    // 9) Links
-    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        // Unordered list
+        html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>�CODEBLOCK4�</ul>');
 
-    // 10) Line breaks
-    html = html.replace(/\n/g, '<br>');
+        // Ordered list
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
 
-    // 11) ลบ <br> ที่ติดกับ block elements
-    html = html.replace(/<br>\s*(<\/?(h[1-3]|ul|ol|li|blockquote|div|pre)[^>]*>)/g, '$1');
-    html = html.replace(/((?:<\/?(h[1-3]|ul|ol|li|blockquote|div|pre)[^>]*>)\s*)<br>/g, '$1');
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
-    // 12) ใส่ code blocks + inline codes กลับ
-    codeBlocks.forEach((block, i) => {
-        html = html.replace(`%%CODEBLOCK_${i}%%`, block);
-    });
-    inlineCodes.forEach((code, i) => {
-        html = html.replace(`%%INLINE_${i}%%`, code);
-    });
+        // Line breaks
+        html = html.replace(/\n/g, '<br>');
 
-    return html;
-},
+        html = html.replace(/<br><\/?(h[1-3]|ul|ol|li|blockquote|div|pre)/g, '</$1');
+        html = html.replace(/<\/(h[1-3]|ul|ol|li|blockquote|div|pre)><br>/g, '</$1>');
+
+        return html;
+    },
+
+    _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    copyCode(btn) {
+        const code = btn.nextElementSibling.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        });
+    },
+
 
     // ========================================
     //  CHAT LIST
