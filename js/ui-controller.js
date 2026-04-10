@@ -245,10 +245,19 @@ btnPrompts: document.getElementById('btn-prompts'),
 
         let html = this._escapeHtml(text);
 
-        // Code blocks
-        html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-            return `<div class="code-block-wrapper"><button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button><pre><code class="language-${lang}">${code.trim()}</code></pre></div>`;
-        });
+// 1. แยกการจัดการ Code Block ออกมาก่อนเป็นอันดับแรก 
+    // เพื่อป้องกันไม่ให้ Regex ตัวอื่น (เช่น Line break) เข้าไปยุ่งกับเนื้อหาข้างใน
+    let html = this._escapeHtml(text);
+
+    // แก้ไข Regex สำหรับ Code Block ให้ดักจับเนื้อหาได้แม่นยำขึ้น
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        // ใช้ trim() เพื่อลบช่องว่างส่วนเกิน แต่ยังคงโครงสร้างบรรทัดใน Code ไว้
+        const cleanCode = code.trim(); 
+        return `<div class="code-block-wrapper">
+                    <button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button>
+                    <pre><code class="language-${lang}">${cleanCode}</code></pre>
+                </div>`;
+    });
 
         // Inline code
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
