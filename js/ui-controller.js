@@ -92,6 +92,15 @@ const UI = {
 
             // Context menu
             contextMenu: document.getElementById('msg-context-menu'),
+
+            // Prompt form fields
+promptName: document.getElementById('prompt-name'),
+promptContent: document.getElementById('prompt-content'),
+promptTags: document.getElementById('prompt-tags'),
+promptEditId: document.getElementById('prompt-edit-id'),
+searchPrompts: document.getElementById('search-prompts'),
+btnPrompts: document.getElementById('btn-prompts'),
+
         };
     },
 
