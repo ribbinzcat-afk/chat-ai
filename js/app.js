@@ -83,6 +83,7 @@ const App = {
         // ---- Modal Triggers ----
         UI.elements.btnSettings.addEventListener('click', () => {
             UI.renderProvidersList();
+            UI.populatePromptDropdown('provider-prompt-select');
             UI.openModal('modal-settings');
         });
 
@@ -276,6 +277,55 @@ const App = {
         document.addEventListener('click', () => {
             UI.elements.contextMenu.style.display = 'none';
         });
+
+        // ---- System Prompts Modal ----
+UI.elements.btnPrompts.addEventListener('click', () => {
+    UI.resetPromptForm();
+    UI.renderPromptsList();
+    UI.openModal('modal-prompts');
+});
+
+// Prompt form submit
+document.getElementById('form-prompt').addEventListener('submit', (e) => {
+    e.preventDefault();
+    this.savePrompt();
+});
+
+// Prompt search
+document.getElementById('search-prompts').addEventListener('input', (e) => {
+    UI.renderPromptsList(e.target.value);
+});
+
+// Provider prompt dropdown → fill textarea
+document.getElementById('provider-prompt-select').addEventListener('change', (e) => {
+    const promptId = e.target.value;
+    if (promptId) {
+        const prompt = Storage.getPrompt(promptId);
+        if (prompt) {
+            UI.elements.providerSystemPrompt.value = prompt.content;
+        }
+    }
+});
+
+// Chat settings prompt dropdown → fill textarea
+document.getElementById('chat-prompt-select').addEventListener('change', (e) => {
+    const promptId = e.target.value;
+    if (promptId) {
+        const prompt = Storage.getPrompt(promptId);
+        if (prompt) {
+            document.getElementById('edit-chat-system').value = prompt.content;
+        }
+    }
+});
+
+// Open prompt library from API form
+document.getElementById('btn-open-prompts-from-api').addEventListener('click', () => {
+    UI.closeModal('modal-settings');
+    UI.resetPromptForm();
+    UI.renderPromptsList();
+    UI.openModal('modal-prompts');
+});
+
     },
 
     // ========================================
@@ -672,6 +722,75 @@ const App = {
     },
 
     // ========================================
+//  SYSTEM PROMPT OPERATIONS (New)
+// ========================================
+
+savePrompt() {
+    const name = UI.elements.promptName.value.trim();
+    const content = UI.elements.promptContent.value.trim();
+    const tagsRaw = UI.elements.promptTags.value.trim();
+    const editId = UI.elements.promptEditId.value || null;
+
+    if (!name || !content) {
+        UI.notify('กรุณากรอกชื่อและเนื้อหา Prompt', 'error');
+        return;
+    }
+
+    // Parse tags
+    const tags = tagsRaw
+        ? tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0)
+        : [];
+
+    const now = Date.now();
+    const prompt = {
+        id: editId || Storage.generateId(),
+        name,
+        content,
+        tags,
+        createdAt: editId ? (Storage.getPrompt(editId)?.createdAt || now) : now,
+        updatedAt: now,
+    };
+
+    Storage.savePrompt(prompt);
+    UI.renderPromptsList();
+    UI.resetPromptForm();
+    UI.notify(`✅ ${editId ? 'แก้ไข' : 'บันทึก'} Prompt เรียบร้อย`, 'success');
+},
+
+editPrompt(id) {
+    const prompt = Storage.getPrompt(id);
+    if (!prompt) return;
+    UI.populatePromptForm(prompt);
+
+    // Scroll form into view
+    document.getElementById('form-prompt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+},
+
+duplicatePrompt(id) {
+    const original = Storage.getPrompt(id);
+    if (!original) return;
+
+    const newPrompt = {
+        ...original,
+        id: Storage.generateId(),
+        name: `${original.name} (สำเนา)`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+    };
+
+    Storage.savePrompt(newPrompt);
+    UI.renderPromptsList();
+    UI.notify('📋 ทำสำเนา Prompt เรียบร้อย', 'success');
+},
+
+deletePrompt(id) {
+    if (!confirm('ลบ Prompt นี้?')) return;
+    Storage.deletePrompt(id);
+    UI.renderPromptsList();
+    UI.notify('🗑️ ลบ Prompt เรียบร้อย', 'info');
+},
+
+    // ========================================
     //  CHAT SETTINGS
     // ========================================
 
@@ -684,6 +803,7 @@ const App = {
         document.getElementById('edit-chat-title').value = chat.title;
         document.getElementById('edit-chat-system').value = chat.systemPrompt || '';
         UI.updatePersonaSelector();
+        UI.populatePromptDropdown('chat-prompt-select', chat.systemPrompt);
         UI.openModal('modal-chat-settings');
     },
 
