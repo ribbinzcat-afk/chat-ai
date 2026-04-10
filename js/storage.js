@@ -120,6 +120,28 @@ const Storage = {
         this.set(this.KEYS.PROFILE, profile);
     },
 
+    // ---- System Prompts (New) ----
+getPrompts() {
+    return this.get(this.KEYS.PROMPTS, []);
+},
+
+getPrompt(id) {
+    return this.getPrompts().find(p => p.id === id) || null;
+},
+
+savePrompt(prompt) {
+    const prompts = this.getPrompts();
+    const idx = prompts.findIndex(p => p.id === prompt.id);
+    if (idx >= 0) prompts[idx] = prompt;
+    else prompts.unshift(prompt); // newest first
+    this.set(this.KEYS.PROMPTS, prompts);
+},
+
+deletePrompt(id) {
+    const prompts = this.getPrompts().filter(p => p.id !== id);
+    this.set(this.KEYS.PROMPTS, prompts);
+},
+
     // ---- Settings ----
     getSettings() {
         return this.get(this.KEYS.SETTINGS, {
