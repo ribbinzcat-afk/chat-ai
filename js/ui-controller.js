@@ -272,7 +272,7 @@ btnPrompts: document.getElementById('btn-prompts'),
 
         // Unordered list
         html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>�CODEBLOCK4�</ul>');
+        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
 
         // Ordered list
         html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
