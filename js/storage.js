@@ -10,6 +10,7 @@ const Storage = {
         PERSONAS: 'acs_personas',
         SETTINGS: 'acs_settings',
         PROFILE: 'acs_profile',
+        PROMPTS: 'acs_prompts',
     },
 
     get(key, fallback = null) {
