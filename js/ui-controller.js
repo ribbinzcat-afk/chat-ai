@@ -375,43 +375,49 @@ btnPrompts: document.getElementById('btn-prompts'),
         this.scrollToBottom();
     },
 
-_renderMessage(msg, persona = null, profile = null) {
-    const isUser = msg.role === 'user';
 
-    if (!profile) profile = Storage.getProfile();
+    _renderMessage(msg, persona = null, profile = null) {
+        const isUser = msg.role === 'user';
 
-    let avatarHTML;
-    let avatarClass = '';
-    if (isUser) {
-        if (profile.avatarData) {
-            avatarHTML = `<img src="${profile.avatarData}" alt="User">`;
-            avatarClass = 'has-image';
+        if (!profile) profile = Storage.getProfile();
+
+        let avatarHTML;
+        let avatarClass = '';
+        if (isUser) {
+            if (profile.avatarData) {
+                avatarHTML = `<img src="${profile.avatarData}" alt="User">`;
+                avatarClass = 'has-image';
+            } else {
+                avatarHTML = '👤';
+            }
         } else {
-            avatarHTML = '👤';
+            if (persona?.avatarData) {
+                avatarHTML = `<img src="${persona.avatarData}" alt="AI">`;
+            } else {
+                avatarHTML = persona?.avatar || 'AI';
+            }
         }
-    } else {
-        if (persona?.avatarData) {
-            avatarHTML = `<img src="${persona.avatarData}" alt="AI">`;
-        } else {
-            avatarHTML = persona?.avatar || 'AI';
-        }
-    }
 
-    const content = isUser
-        ? this._escapeHtml(msg.content).replace(/\n/g, '<br>')
-        : this.parseMarkdown(msg.content);
-    const time = this._formatTime(msg.timestamp);
+        const content = isUser
+            ? this._escapeHtml(msg.content).replace(/\n/g, '<br>')
+            : this.parseMarkdown(msg.content);
+        const time = this._formatTime(msg.timestamp);
 
-    return `
-        <div class="message ${msg.role}" data-msg-id="${msg.id}">
-            <div class="message-avatar ${avatarClass}">${avatarHTML}</div>
-            <div class="message-content">
-                <div class="message-bubble">${content}</div>
-                <div class="message-time">${time}</div>
-                ${this._renderMsgMenu(msg.id, isUser)}
-            </div>
-        </div>`;
-},
+        return `
+            <div class="message ${msg.role}" data-msg-id="${msg.id}">
+                <div class="message-avatar ${avatarClass}">${avatarHTML}</div>
+                <div class="message-content">
+                    <div class="message-bubble">${content}</div>
+                    <div class="message-time">${time}</div>
+                    <div class="message-actions">
+                        ${isUser ? `<button onclick="App.editMessage('${msg.id}')" title="แก้ไข">✏️</button>` : ''}
+                        <button onclick="App.copyMessage('${msg.id}')" title="คัดลอก">📋</button>
+                        ${!isUser ? `<button onclick="App.regenerateMessage()" title="สร้างใหม่">🔄</button>` : ''}
+                        <button onclick="App.deleteMessage('${msg.id}')" title="ลบ">🗑️</button>
+                    </div>
+                </div>
+            </div>`;
+    },
 
     appendMessage(msg, persona = null) {
         this.showWelcome(false);
@@ -421,66 +427,40 @@ _renderMessage(msg, persona = null, profile = null) {
         this.scrollToBottom();
     },
 
-    _renderMsgMenu(msgId, isUser) {
-    return `
-        <div class="message-actions-wrap">
-            <button class="msg-menu-toggle" 
-                    onclick="UI.toggleMsgMenu(event, '${msgId}')" 
-                    title="เมนู">⋮</button>
-            <div class="msg-menu-dropdown" id="msg-menu-${msgId}">
-                ${isUser ? `<button onclick="App.editMessage('${msgId}')">✏️ แก้ไข</button>` : ''}
-                <button onclick="App.copyMessage('${msgId}')">📋 คัดลอก</button>
-                ${!isUser ? `<button onclick="App.regenerateMessage()">🔄 สร้างใหม่</button>` : ''}
-                <button class="danger" onclick="App.deleteMessage('${msgId}')">🗑️ ลบ</button>
-            </div>
-        </div>`;
-},
+    updateStreamingMessage(msgId, content, persona = null) {
+        let msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
 
-    toggleMsgMenu(e, msgId) {
-    e.stopPropagation();
+        if (!msgEl) {
+            this.showWelcome(false);
 
-    const menu = document.getElementById(`msg-menu-${msgId}`);
-    const isOpen = menu.classList.contains('show');
+            let avatarHTML;
+            if (persona?.avatarData) {
+                avatarHTML = `<img src="${persona.avatarData}" alt="AI">`;
+            } else {
+                avatarHTML = persona?.avatar || 'AI';
+            }
 
-    // ปิดเมนูอื่นทั้งหมดก่อน
-    document.querySelectorAll('.msg-menu-dropdown.show')
-        .forEach(m => m.classList.remove('show'));
-
-    if (!isOpen) {
-        menu.classList.add('show');
-    }
-},
-
-updateStreamingMessage(msgId, content, persona = null) {
-    let msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
-
-    if (!msgEl) {
-        this.showWelcome(false);
-
-        let avatarHTML;
-        if (persona?.avatarData) {
-            avatarHTML = `<img src="${persona.avatarData}" alt="AI">`;
-        } else {
-            avatarHTML = persona?.avatar || 'AI';
+            const html = `
+                <div class="message assistant" data-msg-id="${msgId}">
+                    <div class="message-avatar">${avatarHTML}</div>
+                    <div class="message-content">
+                        <div class="message-bubble"></div>
+                        <div class="message-time">กำลังพิมพ์...</div>
+                        <div class="message-actions">
+                            <button onclick="App.copyMessage('${msgId}')" title="คัดลอก">📋</button>
+                            <button onclick="App.regenerateMessage()" title="สร้างใหม่">🔄</button>
+                            <button onclick="App.deleteMessage('${msgId}')" title="ลบ">🗑️</button>
+                        </div>
+                    </div>
+                </div>`;
+            this.elements.messagesWrapper.insertAdjacentHTML('beforeend', html);
+            msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
         }
 
-        const html = `
-            <div class="message assistant" data-msg-id="${msgId}">
-                <div class="message-avatar">${avatarHTML}</div>
-                <div class="message-content">
-                    <div class="message-bubble"></div>
-                    <div class="message-time">กำลังพิมพ์...</div>
-                    ${this._renderMsgMenu(msgId, false)}
-                </div>
-            </div>`;
-        this.elements.messagesWrapper.insertAdjacentHTML('beforeend', html);
-        msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
-    }
-
-    const bubble = msgEl.querySelector('.message-bubble');
-    bubble.innerHTML = this.parseMarkdown(content);
-    this.scrollToBottom();
-},
+        const bubble = msgEl.querySelector('.message-bubble');
+        bubble.innerHTML = this.parseMarkdown(content);
+        this.scrollToBottom();
+    },
 
     finalizeStreamingMessage(msgId) {
         const msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
