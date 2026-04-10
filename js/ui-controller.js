@@ -257,32 +257,28 @@ const codeBlocks = [];
     });
 
         // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
+html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
         // Bold
-        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
+html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         // Italic
-        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
+html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
         // Strikethrough
         html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
         // Headers
-        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
+html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+        
         // Blockquote
         html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
 
         // Unordered list
-        html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-
+html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+        
         // Ordered list
-        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
+html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+        
         // Links
         html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
