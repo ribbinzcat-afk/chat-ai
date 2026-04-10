@@ -283,10 +283,13 @@ html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
         html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
         // Line breaks
-html = html.split('\n').map(line => {
-        return line.startsWith('__CODE_BLOCK_') ? line : line + '<br>';
-    }).join('\n');
+// ตรงส่วนที่จัดการ Line breaks ให้ใช้แบบนี้แทน:
+html = html.replace(/\n/g, '<br>'); // เปลี่ยน \n เป็น <br>
 
+// แล้วเพิ่มบรรทัดนี้เพื่อ "ล้าง" <br> ที่ไปแทรกตามจุดที่ไม่ควรมี
+html = html.replace(/(<\/h[1-3]>|<ul[^>]*>|<\/ul>|<li[^>]*>|<\/li>|<div[^>]*>|<\/div>|<pre[^>]*>|<\/pre>)<br>/g, '$1');
+html = html.replace(/<br>(<h[1-3]|<ul|<li|<div|<pre)/g, '$1');
+        
     // 4. เอา Code Blocks กลับมาใส่ (แก้ไขตรงนี้ให้สะอาดขึ้น)
     codeBlocks.forEach((block, i) => {
         const fullBlock = `<div class="code-block-wrapper" style="margin: 10px 0;">
