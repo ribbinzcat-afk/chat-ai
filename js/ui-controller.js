@@ -719,5 +719,101 @@ btnPrompts: document.getElementById('btn-prompts'),
 
     applyFontSize(size) {
         document.documentElement.setAttribute('data-fontsize', size);
+    },
+
+    // ========================================
+//  SYSTEM PROMPTS LIBRARY
+// ========================================
+
+renderPromptsList(filter = '') {
+    const prompts = Storage.getPrompts();
+    const container = document.getElementById('prompts-list');
+    const filterLower = filter.toLowerCase();
+
+    const filtered = filter
+        ? prompts.filter(p =>
+            p.name.toLowerCase().includes(filterLower) ||
+            p.content.toLowerCase().includes(filterLower) ||
+            (p.tags || []).some(t => t.toLowerCase().includes(filterLower))
+        )
+        : prompts;
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>${filter ? 'ไม่พบ prompt ที่ค้นหา' : 'ยังไม่มี System Prompt ที่บันทึกไว้'}</p>
+            </div>`;
+        return;
     }
+
+    container.innerHTML = filtered.map(p => {
+        const tagsHTML = (p.tags || []).map(t =>
+            `<span class="prompt-tag">${this._escapeHtml(t)}</span>`
+        ).join('');
+
+        const dateStr = this._formatTime(p.updatedAt || p.createdAt);
+
+        return `
+        <div class="prompt-card" data-prompt-id="${p.id}">
+            <div class="prompt-card-header">
+                <h4>${this._escapeHtml(p.name)}</h4>
+                <div class="prompt-card-actions">
+                    <button class="btn-icon" onclick="App.editPrompt('${p.id}')" title="แก้ไข">✏️</button>
+                    <button class="btn-icon" onclick="App.duplicatePrompt('${p.id}')" title="ทำสำเนา">📋</button>
+                    <button class="btn-icon" onclick="App.deletePrompt('${p.id}')" title="ลบ">🗑️</button>
+                </div>
+            </div>
+            <div class="prompt-card-preview">${this._escapeHtml(p.content)}</div>
+            <div class="prompt-card-footer">
+                <div class="prompt-card-tags">${tagsHTML}</div>
+                <span class="prompt-card-date">${dateStr}</span>
+            </div>
+        </div>`;
+    }).join('');
+},
+
+/**
+ * Reset prompt form to blank state
+ */
+resetPromptForm() {
+    document.getElementById('form-prompt').reset();
+    document.getElementById('prompt-edit-id').value = '';
+},
+
+/**
+ * Populate prompt form for editing
+ */
+populatePromptForm(prompt) {
+    this.elements.promptEditId.value = prompt.id;
+    this.elements.promptName.value = prompt.name;
+    this.elements.promptContent.value = prompt.content;
+    this.elements.promptTags.value = (prompt.tags || []).join(', ');
+},
+
+/**
+ * Populate a <select> dropdown with saved prompts
+ * @param {string} selectId - ID of the <select> element
+ * @param {string} currentValue - current system prompt text (to auto-match)
+ */
+populatePromptDropdown(selectId, currentValue = '') {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const prompts = Storage.getPrompts();
+
+    // Keep first default option, clear the rest
+    select.innerHTML = '<option value="">-- เลือกจากคลัง (ไม่บังคับ) --</option>';
+
+    prompts.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        // Auto-select if content matches
+        if (currentValue && p.content.trim() === currentValue.trim()) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    });
+},
+
 };
