@@ -287,18 +287,18 @@ const codeBlocks = [];
         html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
         // Line breaks
-        html = html.replace(/\n/g, '<br>');
+html = html.split('\n').map(line => {
+        return line.startsWith('__CODE_BLOCK_') ? line : line + '<br>';
+    }).join('\n');
 
-        codeBlocks.forEach((block, i) => {
-        const fullBlock = `<div class="code-block-wrapper">
+    // 4. เอา Code Blocks กลับมาใส่ (แก้ไขตรงนี้ให้สะอาดขึ้น)
+    codeBlocks.forEach((block, i) => {
+        const fullBlock = `<div class="code-block-wrapper" style="margin: 10px 0;">
             <button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button>
             <pre><code class="language-${block.lang}">${block.code}</code></pre>
         </div>`;
         html = html.replace(`__CODE_BLOCK_${i}__`, fullBlock);
     });
-
-        html = html.replace(/<br><\/?(h[1-3]|ul|ol|li|blockquote|div|pre)/g, '</$1');
-        html = html.replace(/<\/(h[1-3]|ul|ol|li|blockquote|div|pre)><br>/g, '</$1>');
 
         return html;
     },
