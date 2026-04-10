@@ -244,15 +244,16 @@ btnPrompts: document.getElementById('btn-prompts'),
         if (!text) return '';
 
         let html = this._escapeHtml(text);
+const codeBlocks = [];
 
-    // แก้ไข Regex สำหรับ Code Block ให้ดักจับเนื้อหาได้แม่นยำขึ้น
+    // 1. ดึง Code Blocks ออกมาเก็บไว้ใน Array และวาง "ตัวคั่น" (Placeholder) ไว้แทน
     html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-        // ใช้ trim() เพื่อลบช่องว่างส่วนเกิน แต่ยังคงโครงสร้างบรรทัดใน Code ไว้
-        const cleanCode = code.trim(); 
-        return `<div class="code-block-wrapper">
-                    <button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button>
-                    <pre><code class="language-${lang}">${cleanCode}</code></pre>
-                </div>`;
+        const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+        codeBlocks.push({
+            lang: lang,
+            code: code.trim()
+        });
+        return placeholder;
     });
 
         // Inline code
@@ -287,6 +288,14 @@ btnPrompts: document.getElementById('btn-prompts'),
 
         // Line breaks
         html = html.replace(/\n/g, '<br>');
+
+        codeBlocks.forEach((block, i) => {
+        const fullBlock = `<div class="code-block-wrapper">
+            <button class="btn-copy-code" onclick="UI.copyCode(this)">📋 Copy</button>
+            <pre><code class="language-${block.lang}">${block.code}</code></pre>
+        </div>`;
+        html = html.replace(`__CODE_BLOCK_${i}__`, fullBlock);
+    });
 
         html = html.replace(/<br><\/?(h[1-3]|ul|ol|li|blockquote|div|pre)/g, '</$1');
         html = html.replace(/<\/(h[1-3]|ul|ol|li|blockquote|div|pre)><br>/g, '</$1>');
