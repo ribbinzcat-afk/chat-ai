@@ -508,30 +508,86 @@ body {
 
 .message.user .message-time { text-align: right; }
 
-.message-actions {
-    display: none;
-    gap: 4px;
+/* ─── Three-dot Menu ─── */
+.message-actions-wrap {
+    position: relative;
+    display: inline-block;
     margin-top: 4px;
 }
 
-.message:hover .message-actions { display: flex; }
-
-.message.user .message-actions { justify-content: flex-end; }
-
-.message-actions button {
+/* ปุ่มสามจุด — แสดงตลอด แต่จางๆ */
+.msg-menu-toggle {
     background: none;
     border: none;
     color: var(--text-tertiary);
     cursor: pointer;
+    font-size: 16px;
     padding: 2px 6px;
     border-radius: 4px;
-    font-size: var(--font-size-xs);
+    line-height: 1;
+    transition: var(--transition);
+    opacity: 0;                      /* ซ่อนไว้ */
+}
+
+.message:hover .msg-menu-toggle {
+    opacity: 1;                      /* hover ที่ message ถึงจะเห็นจุดสามจุด */
+}
+
+.msg-menu-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Dropdown menu — ซ่อนจนกว่าจะกด */
+.msg-menu-dropdown {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 4px 0;
+    z-index: 100;
+    min-width: 130px;
+}
+
+/* ถ้าเป็น user → เมนูชิดขวา */
+.message.user .msg-menu-dropdown {
+    left: auto;
+    right: 0;
+}
+
+.msg-menu-dropdown.show {
+    display: block;
+}
+
+.msg-menu-dropdown button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px 14px;
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
     transition: var(--transition);
 }
 
-.message-actions button:hover {
+.msg-menu-dropdown button:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+}
+
+/* ปุ่มลบสีแดง */
+.msg-menu-dropdown button.danger { color: var(--error); }
+.msg-menu-dropdown button.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
 }
 
 /* Typing Indicator */
